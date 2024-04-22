@@ -1,0 +1,74 @@
+openapi: "3.0.0"
+info:
+  version: 0.0.1
+  title: Encryptor service
+  description: Encryptor service endpoints
+paths:
+  /api/v1/list:
+    get:
+      summary: List all supported enryption algorithms, currently supports only AES
+      responses:
+        '200':
+          description: List of encrypted messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+  /api/v1/decrypt:
+    post:
+      summary: Decrypt a cipher text, This endpoint will only accept base64 encoded text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+             $ref: '#/components/schemas/DecryptRequest'      
+      responses:
+        '200':
+          description: deccrypted message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecryptedMessage'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ListResponse:
+      type: object
+      properties:
+        algorithms:
+          type: array
+          items:
+            type: string
+            description: encryption algorithm name
+    DecryptRequest:
+      type: object
+      properties:
+        ciphertext:
+          type: string
+          description: encrypted text
+        algorithm:
+          type: string
+          enum: 
+            - aes
+          description: encryption algorithm
+        cipherkey:
+          type: string
+          description: encryption key
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: error message
+    DecryptedMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: decrypted message
