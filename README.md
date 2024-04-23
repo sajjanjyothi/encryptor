@@ -31,7 +31,7 @@ make lint
 
 #### Code generation
 For code generation go package https://github.com/deepmap/oapi-codegen has been used
-,Any change api can initiate code generation by using below command
+,Any change in api can initiate code generation by using below command
 
 ```
 make generate
