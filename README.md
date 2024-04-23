@@ -29,6 +29,14 @@ linting can be enforced within CI/CD as
 make lint
 ```
 
+#### Code generation
+For code generation go package https://github.com/deepmap/oapi-codegen has been used
+,Any change api can initiate code generation by using below command
+
+```
+make generate
+```
+
 #### ToDo
 - Keys are stored inside a map within service, This will cause issues on horizontal scaling.This can be moved to cache systems such as **redis**
 - API autnentication with JWT
