@@ -8,19 +8,32 @@ import (
 	"sync"
 	"time"
 
-	aesencryptor "github.com/sajjanjyothi/encryptor/pkg/aes"
+	"github.com/sajjanjyothi/encryptor/pkg/aes"
+)
+
+const (
+	// Supported encryption algorithms
+	algorithmAES = "aes"
 )
 
 var (
-	ErrInavlidKeyType = errors.New("Invalid key type")
-	ErrKeysExpired    = errors.New("Keys have expired")
+	// ErrInvalidKeyType is returned when an unsupported encryption algorithm is requested.
+	ErrInvalidKeyType = errors.New("invalid key type")
+	// ErrKeysExpired is returned when encryption keys have expired based on the configured expiry time.
+	ErrKeysExpired = errors.New("keys have expired")
 )
 
+// Encryptor defines the interface for encryption and decryption operations.
 type Encryptor interface {
-	Encrypt(string, string) (string, error)
-	Decrypt(string, string) (string, error)
+	// Encrypt encrypts the given data using the specified key.
+	// The data should be base64 encoded. Returns the encrypted data as a base64 string.
+	Encrypt(data, key string) (string, error)
+	// Decrypt decrypts the given encrypted data using the specified key.
+	// Returns the decrypted data as a base64 encoded string.
+	Decrypt(data, key string) (string, error)
 }
 
+// encryptor implements the Encryptor interface with key expiry management.
 type encryptor struct {
 	keyType       string
 	keys          map[string]time.Time
@@ -28,7 +41,9 @@ type encryptor struct {
 	keysLock      sync.RWMutex
 }
 
-// NewEncryptor creates a new encryptor
+// NewEncryptor creates a new encryptor instance with the specified encryption type and key expiry duration.
+// keyType specifies the encryption algorithm (currently supports "aes").
+// keyExpiry defines how long encryption keys remain valid before expiring.
 func NewEncryptor(keyType string, keyExpiry time.Duration) Encryptor {
 	return &encryptor{
 		keyType:       keyType,
@@ -38,14 +53,16 @@ func NewEncryptor(keyType string, keyExpiry time.Duration) Encryptor {
 	}
 }
 
-// Encrypt encrypts the data
+// Encrypt encrypts the provided base64-encoded data using the specified key.
+// It tracks key usage and enforces key expiry based on the configured expiry time.
+// Returns the encrypted data as a base64-encoded string or an error if encryption fails.
 func (e *encryptor) Encrypt(data string, key string) (string, error) {
 	plainMessage, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		return "", fmt.Errorf("Failed to decode base64: %w", err)
+		return "", fmt.Errorf("failed to decode base64: %w", err)
 	}
 	switch e.keyType {
-	case "aes":
+	case algorithmAES:
 		e.keysLock.Lock()
 		defer e.keysLock.Unlock()
 		if _, ok := e.keys[key]; !ok {
@@ -59,19 +76,21 @@ func (e *encryptor) Encrypt(data string, key string) (string, error) {
 			}
 		}
 		// AES encryption logic here
-		aes := aesencryptor.NewAES(key)
-		return aes.Encrypt(string(plainMessage))
+		aesImpl := aes.NewAES(key)
+		return aesImpl.Encrypt(string(plainMessage))
 	default:
 		// Default encryption logic here
-		return "", ErrInavlidKeyType
+		return "", ErrInvalidKeyType
 	}
 }
 
-// Decrypt decrypts the data
+// Decrypt decrypts the provided encrypted data using the specified key.
+// It verifies key validity and enforces key expiry based on the configured expiry time.
+// Returns the decrypted data as a base64-encoded string or an error if decryption fails.
 func (e *encryptor) Decrypt(data string, key string) (string, error) {
 
 	switch e.keyType {
-	case "aes":
+	case algorithmAES:
 		e.keysLock.Lock()
 		defer e.keysLock.Unlock()
 		if _, ok := e.keys[key]; !ok {
@@ -82,15 +101,15 @@ func (e *encryptor) Decrypt(data string, key string) (string, error) {
 			}
 		}
 		// AES encryption logic here
-		aes := aesencryptor.NewAES(key)
-		decryptedText, err := aes.Decrypt(data)
+		aesImpl := aes.NewAES(key)
+		decryptedText, err := aesImpl.Decrypt(data)
 		if err != nil {
-			return "", fmt.Errorf("Failed to decrypt: %w", err)
+			return "", fmt.Errorf("failed to decrypt: %w", err)
 		}
 		base64DecryptedText := base64.StdEncoding.EncodeToString([]byte(decryptedText))
 		return base64DecryptedText, nil
 	default:
 		// Default encryption logic here
-		return "", ErrInavlidKeyType
+		return "", ErrInvalidKeyType
 	}
 }

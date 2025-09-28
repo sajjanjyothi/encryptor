@@ -1,3 +1,4 @@
+// Package services provides HTTP handlers for the encryption/decryption API.
 package services
 
 import (
@@ -10,53 +11,55 @@ import (
 	"github.com/sajjanjyothi/encryptor/pkg/encryptor"
 )
 
+// supportedAlgorithms lists the encryption algorithms supported by the service.
 var (
 	supportedAlgorithms = []string{string(api.Aes)}
 )
 
+// EncryptorService provides HTTP handlers for encryption and decryption operations.
 type EncryptorService struct {
 	EncryptorDecryptor encryptor.Encryptor
 }
 
+// NewEncryptorService creates a new service instance with the provided encryptor.
 func NewEncryptorService(encryptorDecryptor encryptor.Encryptor) *EncryptorService {
 	return &EncryptorService{
 		EncryptorDecryptor: encryptorDecryptor,
 	}
 }
 
-// GetApiV1List returns the list of supported algorithms
-// Decrypt a cipher text
-// (POST /api/v1/decrypt)
+// GetAPIV1List returns the list of supported encryption algorithms.
+// It responds with a JSON array of algorithm names.
 func (e *EncryptorService) GetApiV1List(ctx echo.Context) error {
 	slog.LogAttrs(ctx.Request().Context(), slog.LevelDebug, "List of supported algorithms", slog.Any("algorithms", supportedAlgorithms))
-	return ctx.JSON(200, api.ListResponse{
+	return ctx.JSON(http.StatusOK, api.ListResponse{
 		Algorithms: &supportedAlgorithms,
 	})
 }
 
-// PostApiV1Decrypt decrypts a cipher text
-// Decrypt a cipher text
-// (POST /api/v1/decrypt)
+// PostAPIV1Decrypt decrypts ciphertext using the specified algorithm and key.
+// It validates the request parameters, performs decryption, and returns the result.
+// Returns appropriate HTTP error codes for various failure conditions.
 func (e *EncryptorService) PostApiV1Decrypt(ctx echo.Context) error {
-	var DecryptRequest api.DecryptRequest
-	if err := ctx.Bind(&DecryptRequest); err != nil {
-		slog.Error("Failed to bind request", err)
+	var decryptRequest api.DecryptRequest
+	if err := ctx.Bind(&decryptRequest); err != nil {
+		slog.Error("Failed to bind request", "error", err)
 		response := "invalid request"
 		return ctx.JSON(http.StatusBadRequest, api.ErrorResponse{
 			Message: &response,
 		})
 	}
 
-	if DecryptRequest.Algorithm == nil || DecryptRequest.Cipherkey == nil || DecryptRequest.Ciphertext == nil {
-		slog.Error("Invalid request, seems like algm, cipherkey or ciphertext is missing")
+	if decryptRequest.Algorithm == nil || decryptRequest.Cipherkey == nil || decryptRequest.Ciphertext == nil {
+		slog.Error("Invalid request, algorithm, cipherkey or ciphertext is missing")
 		response := "invalid request"
 		return ctx.JSON(http.StatusBadRequest, api.ErrorResponse{
 			Message: &response,
 		})
 	}
-	decryptedMessage, err := e.EncryptorDecryptor.Decrypt(*DecryptRequest.Ciphertext, *DecryptRequest.Cipherkey)
+	decryptedMessage, err := e.EncryptorDecryptor.Decrypt(*decryptRequest.Ciphertext, *decryptRequest.Cipherkey)
 	if err != nil {
-		if errors.Is(err, encryptor.ErrInavlidKeyType) {
+		if errors.Is(err, encryptor.ErrInvalidKeyType) {
 			slog.LogAttrs(ctx.Request().Context(), slog.LevelError, "invalid key type", slog.Any("error", err))
 			response := "invalid key type"
 			return ctx.JSON(http.StatusBadRequest, api.ErrorResponse{

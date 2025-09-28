@@ -14,24 +14,40 @@ import (
 )
 
 const (
+	// Default configuration constants
 	keyExpiryTime = 10 * time.Minute
+	serverPort    = ":8080"
+	staticPath    = "api"
+
+	// Supported encryption algorithms
+	defaultAlgorithm = "aes"
 )
 
 func main() {
-	encryptorDecryptor := encryptor.NewEncryptor("aes", keyExpiryTime)
+	// Initialize encryptor with AES algorithm and key expiry
+	encryptorDecryptor := encryptor.NewEncryptor(defaultAlgorithm, keyExpiryTime)
 	encryptorDecryptorService := services.NewEncryptorService(encryptorDecryptor)
-	//wait for signal interrupt to shut down cleanly the server
+
+	// Set up graceful shutdown channel
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// Configure Echo server
 	e := echo.New()
 	api.RegisterHandlers(e, encryptorDecryptorService)
-	e.Static("/", "api") //for api serving swagger ui
+	e.Static("/", staticPath) // Serve API documentation
+
+	// Start server in a goroutine
 	go func() {
-		if err := e.Start(":8080"); err != nil {
+		if err := e.Start(serverPort); err != nil {
 			e.Logger.Fatal(err)
 		}
 	}()
+
+	// Wait for shutdown signal
 	<-done
+
+	// Gracefully shutdown the server
 	if err := e.Shutdown(context.Background()); err != nil {
 		e.Logger.Fatal(err)
 	}
