@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	aesencryptor "github.com/sajjanjyothi/encryptor/pkg/aes"
+	"github.com/sajjanjyothi/encryptor/pkg/aes"
 )
 
 var (
-	ErrInavlidKeyType = errors.New("Invalid key type")
-	ErrKeysExpired    = errors.New("Keys have expired")
+	ErrInvalidKeyType = errors.New("invalid key type")
+	ErrKeysExpired    = errors.New("keys have expired")
 )
 
 type Encryptor interface {
@@ -42,7 +42,7 @@ func NewEncryptor(keyType string, keyExpiry time.Duration) Encryptor {
 func (e *encryptor) Encrypt(data string, key string) (string, error) {
 	plainMessage, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		return "", fmt.Errorf("Failed to decode base64: %w", err)
+		return "", fmt.Errorf("failed to decode base64: %w", err)
 	}
 	switch e.keyType {
 	case "aes":
@@ -59,11 +59,11 @@ func (e *encryptor) Encrypt(data string, key string) (string, error) {
 			}
 		}
 		// AES encryption logic here
-		aes := aesencryptor.NewAES(key)
-		return aes.Encrypt(string(plainMessage))
+		aesImpl := aes.NewAES(key)
+		return aesImpl.Encrypt(string(plainMessage))
 	default:
 		// Default encryption logic here
-		return "", ErrInavlidKeyType
+		return "", ErrInvalidKeyType
 	}
 }
 
@@ -82,15 +82,15 @@ func (e *encryptor) Decrypt(data string, key string) (string, error) {
 			}
 		}
 		// AES encryption logic here
-		aes := aesencryptor.NewAES(key)
-		decryptedText, err := aes.Decrypt(data)
+		aesImpl := aes.NewAES(key)
+		decryptedText, err := aesImpl.Decrypt(data)
 		if err != nil {
-			return "", fmt.Errorf("Failed to decrypt: %w", err)
+			return "", fmt.Errorf("failed to decrypt: %w", err)
 		}
 		base64DecryptedText := base64.StdEncoding.EncodeToString([]byte(decryptedText))
 		return base64DecryptedText, nil
 	default:
 		// Default encryption logic here
-		return "", ErrInavlidKeyType
+		return "", ErrInvalidKeyType
 	}
 }

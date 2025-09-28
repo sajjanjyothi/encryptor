@@ -1,4 +1,4 @@
-package aesencryptor
+package aes
 
 import (
 	"crypto/aes"
@@ -15,19 +15,19 @@ type AES interface {
 	Decrypt(string) (string, error)
 }
 
-type encryptorAES struct {
+type encryptor struct {
 	key string
 }
 
 // NewAES creates a new aes
 func NewAES(key string) AES {
-	return &encryptorAES{
+	return &encryptor{
 		key: key,
 	}
 }
 
 // Encrypt encrypts the message
-func (a *encryptorAES) Encrypt(message string) (string, error) {
+func (a *encryptor) Encrypt(message string) (string, error) {
 	byteMsg := []byte(message)
 	block, err := aes.NewCipher([]byte(a.key))
 	if err != nil {
@@ -47,7 +47,7 @@ func (a *encryptorAES) Encrypt(message string) (string, error) {
 }
 
 // Decrypt decrypts the message
-func (a *encryptorAES) Decrypt(message string) (string, error) {
+func (a *encryptor) Decrypt(message string) (string, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(message)
 	if err != nil {
 		return "", fmt.Errorf("could not base64 decode: %v", err)
