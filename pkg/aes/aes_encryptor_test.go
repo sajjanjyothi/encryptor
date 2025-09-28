@@ -7,7 +7,7 @@ import (
 func TestNewAES(t *testing.T) {
 	key := "1234567890123456"
 	aes := NewAES(key)
-	
+
 	if aes == nil {
 		t.Error("NewAES should not return nil")
 	}
@@ -45,12 +45,12 @@ func Test_encryptor_Encrypt(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := NewAES(tt.key)
 			_, err := a.Encrypt(tt.message)
-			
+
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("Encrypt() expected error but got nil")
@@ -67,20 +67,20 @@ func Test_encryptor_Encrypt(t *testing.T) {
 func Test_encryptor_Decrypt(t *testing.T) {
 	key := "1234567890123456"
 	message := "hello world"
-	
+
 	// First encrypt the message
 	aes := NewAES(key)
 	encrypted, err := aes.Encrypt(message)
 	if err != nil {
 		t.Fatalf("Failed to encrypt message: %v", err)
 	}
-	
+
 	// Then decrypt it
 	decrypted, err := aes.Decrypt(encrypted)
 	if err != nil {
 		t.Fatalf("Failed to decrypt message: %v", err)
 	}
-	
+
 	if decrypted != message {
 		t.Errorf("Decrypted message %q doesn't match original %q", decrypted, message)
 	}
@@ -106,12 +106,12 @@ func Test_encryptor_Decrypt_InvalidData(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := NewAES(tt.key)
 			_, err := a.Decrypt(tt.message)
-			
+
 			if !tt.wantErr {
 				t.Errorf("Decrypt() expected no error but got: %v", err)
 			} else if err == nil {

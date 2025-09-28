@@ -1,3 +1,4 @@
+// Package aes provides AES encryption and decryption functionality.
 package aes
 
 import (
@@ -9,24 +10,29 @@ import (
 	"io"
 )
 
-// AES interface
+// AES defines the interface for AES encryption and decryption operations.
 type AES interface {
-	Encrypt(string) (string, error)
-	Decrypt(string) (string, error)
+	// Encrypt encrypts a plaintext message and returns the base64-encoded ciphertext.
+	Encrypt(message string) (string, error)
+	// Decrypt decrypts a base64-encoded ciphertext and returns the plaintext message.
+	Decrypt(message string) (string, error)
 }
 
+// encryptor implements AES encryption using CFB mode with random initialization vectors.
 type encryptor struct {
-	key string
+	key string // AES key - must be 16, 24, or 32 bytes for AES-128, AES-192, or AES-256
 }
 
-// NewAES creates a new aes
+// NewAES creates a new AES encryptor with the specified key.
+// The key must be 16, 24, or 32 bytes long for AES-128, AES-192, or AES-256 respectively.
 func NewAES(key string) AES {
 	return &encryptor{
 		key: key,
 	}
 }
 
-// Encrypt encrypts the message
+// Encrypt encrypts the plaintext message using AES in CFB mode with a random IV.
+// Returns the encrypted data as a base64-encoded string that includes the IV.
 func (a *encryptor) Encrypt(message string) (string, error) {
 	byteMsg := []byte(message)
 	block, err := aes.NewCipher([]byte(a.key))
@@ -46,7 +52,8 @@ func (a *encryptor) Encrypt(message string) (string, error) {
 	return base64.StdEncoding.EncodeToString(cipherText), nil
 }
 
-// Decrypt decrypts the message
+// Decrypt decrypts a base64-encoded ciphertext that was encrypted using Encrypt.
+// The ciphertext must include the IV at the beginning.
 func (a *encryptor) Decrypt(message string) (string, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(message)
 	if err != nil {
